@@ -322,4 +322,4 @@ For questions about this educational project:
 
 ---
 
-**Built with ❤️ for educational purposes**
+**Educational Project 2025**

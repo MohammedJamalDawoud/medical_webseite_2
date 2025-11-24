@@ -1,6 +1,31 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Typography, Grid, Card, CardContent, TextField, Button, Chip, Box } from '@mui/material';
+import {
+    Typography,
+    Grid,
+    Card,
+    CardContent,
+    TextField,
+    Button,
+    Chip,
+    Box,
+    Avatar,
+    InputAdornment,
+    Paper,
+    Divider,
+    IconButton,
+    Stack,
+    CircularProgress,
+} from '@mui/material';
+import {
+    Search,
+    LocationOn,
+    MedicalServices,
+    Star,
+    Schedule,
+    Clear,
+    Person,
+} from '@mui/icons-material';
 import apiClient from '../api/client';
 
 export default function DoctorSearchPage() {
@@ -20,42 +45,317 @@ export default function DoctorSearchPage() {
     });
 
     const handleSearch = () => setSearchParams(filters);
+    const handleClear = () => {
+        setFilters({ name: '', specialization: '', city: '' });
+        setSearchParams({});
+    };
+
+    const getSpecialtyColor = (specialty: string) => {
+        const colors: Record<string, string> = {
+            'Allgemeinmedizin': '#4facfe',
+            'Kardiologie': '#f093fb',
+            'Dermatologie': '#43e97b',
+            'Orthopädie': '#fa709a',
+            'Neurologie': '#667eea',
+            'Pädiatrie': '#feca57',
+        };
+        return colors[specialty] || '#667eea';
+    };
 
     return (
-        <>
-            <Typography variant="h4" gutterBottom>Arzt finden</Typography>
-
-            <Box sx={{ mb: 3 }}>
-                <Grid container spacing={2}>
-                    <Grid item xs={12} md={4}>
-                        <TextField fullWidth label="Name" value={filters.name} onChange={(e) => setFilters({ ...filters, name: e.target.value })} />
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                        <TextField fullWidth label="Fachrichtung" value={filters.specialization} onChange={(e) => setFilters({ ...filters, specialization: e.target.value })} />
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                        <TextField fullWidth label="Stadt" value={filters.city} onChange={(e) => setFilters({ ...filters, city: e.target.value })} />
-                    </Grid>
-                </Grid>
-                <Button variant="contained" onClick={handleSearch} sx={{ mt: 2 }}>Suchen</Button>
+        <Box>
+            {/* Header */}
+            <Box sx={{ mb: 4 }}>
+                <Typography
+                    variant="h3"
+                    gutterBottom
+                    sx={{
+                        fontWeight: 700,
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                    }}
+                >
+                    Arzt finden
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                    Finden Sie den passenden Spezialisten für Ihre Bedürfnisse
+                </Typography>
             </Box>
 
-            {isLoading ? <Typography>Laden...</Typography> : (
-                <Grid container spacing={2}>
-                    {doctors?.map((doctor: any) => (
+            {/* Search Filters */}
+            <Paper
+                elevation={2}
+                sx={{
+                    p: 3,
+                    mb: 4,
+                    borderRadius: 3,
+                    background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
+                }}
+            >
+                <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} md={4}>
+                        <TextField
+                            fullWidth
+                            label="Arztname"
+                            placeholder="z.B. Dr. Schmidt"
+                            value={filters.name}
+                            onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Person color="action" />
+                                    </InputAdornment>
+                                ),
+                            }}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2,
+                                    backgroundColor: 'white',
+                                },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                        <TextField
+                            fullWidth
+                            label="Fachrichtung"
+                            placeholder="z.B. Kardiologie"
+                            value={filters.specialization}
+                            onChange={(e) => setFilters({ ...filters, specialization: e.target.value })}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <MedicalServices color="action" />
+                                    </InputAdornment>
+                                ),
+                            }}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2,
+                                    backgroundColor: 'white',
+                                },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                        <TextField
+                            fullWidth
+                            label="Stadt"
+                            placeholder="z.B. Berlin"
+                            value={filters.city}
+                            onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <LocationOn color="action" />
+                                    </InputAdornment>
+                                ),
+                            }}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2,
+                                    backgroundColor: 'white',
+                                },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <Stack direction="row" spacing={2}>
+                            <Button
+                                variant="contained"
+                                onClick={handleSearch}
+                                startIcon={<Search />}
+                                sx={{
+                                    px: 4,
+                                    py: 1.2,
+                                    borderRadius: 2,
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                }}
+                            >
+                                Suchen
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                onClick={handleClear}
+                                startIcon={<Clear />}
+                                sx={{
+                                    px: 3,
+                                    py: 1.2,
+                                    borderRadius: 2,
+                                    textTransform: 'none',
+                                    borderWidth: 2,
+                                    '&:hover': { borderWidth: 2 },
+                                }}
+                            >
+                                Zurücksetzen
+                            </Button>
+                        </Stack>
+                    </Grid>
+                </Grid>
+            </Paper>
+
+            {/* Results */}
+            {isLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                    <CircularProgress size={60} thickness={4} />
+                </Box>
+            ) : doctors && doctors.length > 0 ? (
+                <Grid container spacing={3}>
+                    {doctors.map((doctor: any, index: number) => (
                         <Grid item xs={12} md={6} key={doctor.id}>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="h6">{doctor.name}</Typography>
-                                    <Chip label={doctor.specialization} size="small" sx={{ mt: 1 }} />
-                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{doctor.city}</Typography>
-                                    <Typography variant="body2" sx={{ mt: 1 }}>{doctor.description}</Typography>
+                            <Card
+                                sx={{
+                                    height: '100%',
+                                    borderRadius: 3,
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        transform: 'translateY(-8px)',
+                                        boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
+                                    },
+                                    animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
+                                    '@keyframes fadeInUp': {
+                                        from: {
+                                            opacity: 0,
+                                            transform: 'translateY(20px)',
+                                        },
+                                        to: {
+                                            opacity: 1,
+                                            transform: 'translateY(0)',
+                                        },
+                                    },
+                                }}
+                            >
+                                <CardContent sx={{ p: 3 }}>
+                                    {/* Doctor Header */}
+                                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                                        <Avatar
+                                            sx={{
+                                                width: 64,
+                                                height: 64,
+                                                mr: 2,
+                                                background: `linear-gradient(135deg, ${getSpecialtyColor(doctor.specialization)}40 0%, ${getSpecialtyColor(doctor.specialization)} 100%)`,
+                                                fontSize: '1.5rem',
+                                                fontWeight: 600,
+                                                color: getSpecialtyColor(doctor.specialization),
+                                            }}
+                                        >
+                                            {doctor.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                                        </Avatar>
+                                        <Box sx={{ flexGrow: 1 }}>
+                                            <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+                                                {doctor.name}
+                                            </Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                                <Chip
+                                                    label={doctor.specialization}
+                                                    size="small"
+                                                    sx={{
+                                                        background: `${getSpecialtyColor(doctor.specialization)}20`,
+                                                        color: getSpecialtyColor(doctor.specialization),
+                                                        fontWeight: 600,
+                                                        borderRadius: 1.5,
+                                                    }}
+                                                />
+                                                <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                                                    <Star sx={{ fontSize: 16, color: '#feca57', mr: 0.5 }} />
+                                                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                                        4.8
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                        </Box>
+                                    </Box>
+
+                                    <Divider sx={{ my: 2 }} />
+
+                                    {/* Doctor Info */}
+                                    <Stack spacing={1.5}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <LocationOn sx={{ fontSize: 20, color: 'text.secondary', mr: 1 }} />
+                                            <Typography variant="body2" color="text.secondary">
+                                                {doctor.city} • {doctor.clinic_address?.split(',')[0] || 'Klinik'}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <Schedule sx={{ fontSize: 20, color: 'text.secondary', mr: 1 }} />
+                                            <Typography variant="body2" color="text.secondary">
+                                                {doctor.availability_notes || 'Verfügbarkeit auf Anfrage'}
+                                            </Typography>
+                                        </Box>
+                                    </Stack>
+
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        sx={{
+                                            mt: 2,
+                                            display: '-webkit-box',
+                                            WebkitLineClamp: 2,
+                                            WebkitBoxOrient: 'vertical',
+                                            overflow: 'hidden',
+                                        }}
+                                    >
+                                        {doctor.description}
+                                    </Typography>
+
+                                    {/* Action Button */}
+                                    <Button
+                                        fullWidth
+                                        variant="contained"
+                                        sx={{
+                                            mt: 3,
+                                            py: 1.2,
+                                            borderRadius: 2,
+                                            textTransform: 'none',
+                                            fontWeight: 600,
+                                            background: `linear-gradient(135deg, ${getSpecialtyColor(doctor.specialization)} 0%, ${getSpecialtyColor(doctor.specialization)}CC 100%)`,
+                                            '&:hover': {
+                                                background: `linear-gradient(135deg, ${getSpecialtyColor(doctor.specialization)}CC 0%, ${getSpecialtyColor(doctor.specialization)} 100%)`,
+                                            },
+                                        }}
+                                    >
+                                        Termin buchen
+                                    </Button>
                                 </CardContent>
                             </Card>
                         </Grid>
                     ))}
                 </Grid>
+            ) : (
+                <Paper
+                    sx={{
+                        p: 8,
+                        textAlign: 'center',
+                        borderRadius: 3,
+                        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
+                    }}
+                >
+                    <Box
+                        sx={{
+                            width: 80,
+                            height: 80,
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #667eea20 0%, #764ba220 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto',
+                            mb: 3,
+                        }}
+                    >
+                        <MedicalServices sx={{ fontSize: 40, color: '#667eea' }} />
+                    </Box>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                        Keine Ärzte gefunden
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Versuchen Sie andere Suchkriterien oder lassen Sie die Filter leer, um alle Ärzte anzuzeigen
+                    </Typography>
+                </Paper>
             )}
-        </>
+        </Box>
     );
 }

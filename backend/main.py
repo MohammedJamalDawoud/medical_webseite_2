@@ -47,7 +47,9 @@ from routers import (
     reports,
     lab_results,
     health_content,
-    symptom_checker
+    symptom_checker,
+    notifications,
+    search
 )
 
 app.include_router(auth.router)
@@ -58,6 +60,8 @@ app.include_router(reports.router)
 app.include_router(lab_results.router)
 app.include_router(health_content.router)
 app.include_router(symptom_checker.router)
+app.include_router(notifications.router)
+app.include_router(search.router)
 
 
 # Startup event

@@ -25,9 +25,16 @@ import {
     FitnessCenter,
     Help,
     Person,
+    Dashboard,
+    Search,
+    Brightness4,
+    Brightness7,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import NotificationsMenu from '../components/NotificationsMenu';
+import GlobalSearch from '../components/GlobalSearch';
+import { useThemeMode } from '../context/ThemeContext';
 
 const drawerWidth = 240;
 
@@ -38,8 +45,10 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [searchOpen, setSearchOpen] = useState(false);
     const navigate = useNavigate();
     const { user, logout } = useAuth();
+    const { mode, toggleTheme } = useThemeMode();
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -59,6 +68,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     };
 
     const menuItems = [
+        { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
         { text: 'Termine & Ärzte', icon: <CalendarToday />, path: '/doctors' },
         { text: 'Rezepte & Medikamente', icon: <LocalHospital />, path: '/prescriptions' },
         { text: 'Berichte', icon: <Description />, path: '/reports' },
@@ -72,7 +82,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     const drawer = (
         <div>
             <Toolbar>
-                <Typography variant="h6" noWrap>
+                <Typography variant="h6" noWrap sx={{ fontWeight: 700, color: 'primary.main' }}>
                     Telemedizin
                 </Typography>
             </Toolbar>
@@ -80,7 +90,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 {menuItems.map((item) => (
                     <ListItem key={item.text} disablePadding>
                         <ListItemButton onClick={() => { navigate(item.path); setMobileOpen(false); }}>
-                            <ListItemIcon>{item.icon}</ListItemIcon>
+                            <ListItemIcon sx={{ color: 'primary.main' }}>{item.icon}</ListItemIcon>
                             <ListItemText primary={item.text} />
                         </ListItemButton>
                     </ListItem>
@@ -91,7 +101,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
     return (
         <Box sx={{ display: 'flex' }}>
-            <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+            <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+
+            <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, bgcolor: 'background.paper', color: 'text.primary', boxShadow: 1 }}>
                 <Toolbar>
                     <IconButton
                         color="inherit"
@@ -101,19 +113,33 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+                    <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 700 }}>
                         Telemedizin Portal
                     </Typography>
-                    <Typography variant="body1" sx={{ mr: 2 }}>
-                        {user?.name}
-                    </Typography>
-                    <IconButton color="inherit" onClick={handleMenu}>
-                        <AccountCircle />
-                    </IconButton>
-                    <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-                        <MenuItem onClick={() => { navigate('/account'); handleClose(); }}>Profil</MenuItem>
-                        <MenuItem onClick={handleLogout}>Abmelden</MenuItem>
-                    </Menu>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton color="inherit" onClick={() => setSearchOpen(true)} sx={{ mr: 1 }}>
+                            <Search />
+                        </IconButton>
+
+                        <IconButton onClick={toggleTheme} color="inherit" sx={{ mr: 1 }}>
+                            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+                        </IconButton>
+
+                        <Typography variant="body1" sx={{ mr: 2, fontWeight: 500, display: { xs: 'none', sm: 'block' } }}>
+                            {user?.name}
+                        </Typography>
+
+                        <NotificationsMenu />
+
+                        <IconButton color="inherit" onClick={handleMenu}>
+                            <AccountCircle />
+                        </IconButton>
+                        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+                            <MenuItem onClick={() => { navigate('/account'); handleClose(); }}>Profil</MenuItem>
+                            <MenuItem onClick={handleLogout}>Abmelden</MenuItem>
+                        </Menu>
+                    </Box>
                 </Toolbar>
             </AppBar>
 
@@ -134,7 +160,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     variant="permanent"
                     sx={{
                         display: { xs: 'none', sm: 'block' },
-                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: 'none', boxShadow: '4px 0 24px rgba(0,0,0,0.02)' },
                     }}
                     open
                 >
@@ -142,9 +168,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 </Drawer>
             </Box>
 
-            <Box component="main" sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}>
+            <Box component="main" sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` }, minHeight: '100vh', bgcolor: 'background.default' }}>
                 <Toolbar />
-                <Container maxWidth="lg">
+                <Container maxWidth="lg" sx={{ py: 4 }}>
                     {children}
                 </Container>
             </Box>

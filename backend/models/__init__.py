@@ -12,6 +12,7 @@ from .lab_result import LabResult
 from .health_tip import HealthTip
 from .faq import FAQ
 from .symptom_check_session import SymptomCheckSession
+from .notification import Notification
 
 __all__ = [
     "User",
@@ -27,4 +28,5 @@ __all__ = [
     "HealthTip",
     "FAQ",
     "SymptomCheckSession",
+    "Notification",
 ]

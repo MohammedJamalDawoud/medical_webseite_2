@@ -140,14 +140,14 @@ def seed_database():
             {
                 "name": "Ramipril 5mg",
                 "dosage": "1 Tablette",
-                "frequency": "1x täglich morgens",
+                "frequency_description": "1x täglich morgens",
                 "start_date": date.today() - timedelta(days=30),
                 "notes": "Mit Wasser einnehmen"
             },
             {
                 "name": "ASS 100mg",
                 "dosage": "1 Tablette",
-                "frequency": "1x täglich abends",
+                "frequency_description": "1x täglich abends",
                 "start_date": date.today() - timedelta(days=30),
                 "notes": "Nach dem Essen"
             }

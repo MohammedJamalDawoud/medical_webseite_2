@@ -13,7 +13,7 @@ import {
     InputAdornment,
     Paper,
     Divider,
-    IconButton,
+
     Stack,
     CircularProgress,
 } from '@mui/material';
@@ -30,7 +30,7 @@ import apiClient from '../api/client';
 
 export default function DoctorSearchPage() {
     const [filters, setFilters] = useState({ name: '', specialization: '', city: '' });
-    const [searchParams, setSearchParams] = useState({});
+    const [searchParams, setSearchParams] = useState<{ name?: string; specialization?: string; city?: string }>({});
 
     const { data: doctors, isLoading } = useQuery({
         queryKey: ['doctors', searchParams],

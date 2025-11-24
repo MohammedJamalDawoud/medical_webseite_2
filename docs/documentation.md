@@ -7,9 +7,6 @@ This telemedicine patient portal is an **educational demonstration** developed a
 
 **IMPORTANT:** This system is NOT certified for real healthcare use and does NOT replace professional medical advice.
 
-### AI Assistance
-This implementation was developed with the assistance of an AI-based code generation tool (Google Deepmind's Antigravity assistant) to accelerate development while maintaining educational value.
-
 ### Scope
 The application provides:
 - Patient registration and authentication

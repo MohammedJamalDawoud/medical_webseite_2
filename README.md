@@ -280,8 +280,6 @@ This project was developed as part of a medical engineering course to demonstrat
 - RESTful API design
 - React state management
 
-**AI Assistance:** This implementation was developed with the assistance of Google Deepmind's Antigravity AI coding assistant.
-
 ---
 
 ## ⚖️ Limitations

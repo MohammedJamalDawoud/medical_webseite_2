@@ -68,9 +68,9 @@ app.include_router(search.router)
 @app.on_event("startup")
 async def startup_event():
     """Run on application startup."""
-    print("🚀 Telemedicine API starting...")
-    print(f"📊 Database: {settings.DATABASE_URL}")
-    print(f"🔧 Debug mode: {settings.DEBUG}")
+    print(" Telemedicine API starting...")
+    print(f" Database: {settings.DATABASE_URL}")
+    print(f" Debug mode: {settings.DEBUG}")
 
 # Shutdown event
 @app.on_event("shutdown")

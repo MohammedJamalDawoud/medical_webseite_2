@@ -27,7 +27,7 @@ The application provides:
 - DOCTOR: Login, manage appointments, create prescriptions/reports/lab results
 
 **Core Features:**
-1. **Termine & Ärzte** - Doctor search, appointment booking, appointment history
+1. **Termine & rzte** - Doctor search, appointment booking, appointment history
 2. **Rezepte & Medikamente** - View prescriptions, manage medication reminders, track intake
 3. **Berichte & Laborergebnisse** - View and download medical reports and lab results as PDF
 4. **Lebenserhaltung & Fitness** - Browse health tips (movement, nutrition, prevention)
@@ -85,21 +85,21 @@ graph TD
 **Core Entities:**
 
 - **User** - Authentication (email, password_hash, role)
-  - → Patient relation (1:1)
-  - → Doctor relation (1:1)
+  -  Patient relation (1:1)
+  -  Doctor relation (1:1)
 
 - **Appointment** - Scheduling (date, time, type, status)
-  - → Patient (many:1)
-  - → Doctor (many:1)
+  -  Patient (many:1)
+  -  Doctor (many:1)
 
 - **Prescription** - Medication prescriptions
-  - → Patient (many:1)
-  - → Doctor (many:1)
-  - → Medications (1:many)
+  -  Patient (many:1)
+  -  Doctor (many:1)
+  -  Medications (1:many)
 
 - **Medication** - Individual medications
-  - → Reminders (1:many)
-  - → Intake history (1:many)
+  -  Reminders (1:many)
+  -  Intake history (1:many)
 
 - **Report** - Doctor reports (title, content, file)
 - **LabResult** - Laboratory results (test_name, value, range)
@@ -142,23 +142,23 @@ graph TD
 
 ```
 App.tsx (Router)
-├── Auth Pages (Public)
-│   ├── LoginPage
-│   └── RegisterPage
-└── MainLayout (Protected)
-    ├── Navbar (AppBar)
-    ├── Sidebar (Drawer)
-    └── Page Content
-        ├── DashboardPage
-        ├── DoctorSearchPage
-        ├── AppointmentsPage
-        ├── PrescriptionsPage
-        ├── ReportsPage
-        ├── LabResultsPage
-        ├── HealthTipsPage
-        ├── FAQPage
-        ├── SymptomCheckerPage
-        └── AccountPage
+ Auth Pages (Public)
+    LoginPage
+    RegisterPage
+ MainLayout (Protected)
+     Navbar (AppBar)
+     Sidebar (Drawer)
+     Page Content
+         DashboardPage
+         DoctorSearchPage
+         AppointmentsPage
+         PrescriptionsPage
+         ReportsPage
+         LabResultsPage
+         HealthTipsPage
+         FAQPage
+         SymptomCheckerPage
+         AccountPage
 ```
 
 ### State Management

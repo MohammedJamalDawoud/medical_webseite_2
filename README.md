@@ -1,26 +1,26 @@
 # Telemedizin Patient Portal
 
-> ⚠️ **IMPORTANT DISCLAIMER** ⚠️  
+>  **IMPORTANT DISCLAIMER**   
 > This is an **EDUCATIONAL DEMONSTRATION** developed for a medical engineering student project.  
 > This system is **NOT certified for real healthcare use** and does **NOT replace professional medical advice**.  
 > **DO NOT use this system with real patient data or for actual medical care.**
 
 ---
 
-## 📋 Overview
+##  Overview
 
 A modern telemedicine patient portal demonstrating realistic patient-doctor interactions including:
-- 🏥 Appointment scheduling
-- 💊 Prescription and medication management  
-- 📄 Medical reports and laboratory results
-- 💪 Health tips and fitness guidance
-- 🔍 Educational symptom checker (non-diagnostic)
+-  Appointment scheduling
+-  Prescription and medication management  
+-  Medical reports and laboratory results
+-  Health tips and fitness guidance
+-  Educational symptom checker (non-diagnostic)
 
 **German UI** with English codebase. Built with modern web technologies for educational purposes.
 
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 **Backend:**
 - FastAPI (Python 3.11+)
@@ -38,10 +38,10 @@ A modern telemedicine patient portal demonstrating realistic patient-doctor inte
 
 ---
 
-## ✨ Features
+##  Features
 
 ### Patient Features (German UI)
-1. **Termine & Ärzte** - Search doctors, book appointments, view history
+1. **Termine & rzte** - Search doctors, book appointments, view history
 2. **Rezepte & Medikamente** - View prescriptions, set medication reminders, track intake
 3. **Berichte & Laborergebnisse** - View and download medical reports and lab results as PDF
 4. **Lebenserhaltung & Fitness** - Browse health tips (Movement, Nutrition, Prevention)
@@ -55,7 +55,7 @@ A modern telemedicine patient portal demonstrating realistic patient-doctor inte
 
 ---
 
-## 🚀 Quick Start (Local Development)
+##  Quick Start (Local Development)
 
 ### Prerequisites
 - **Python 3.11+** ([Download](https://www.python.org/downloads/))
@@ -102,8 +102,8 @@ python seed_data.py
 python -m uvicorn main:app --reload
 ```
 
-✅ Backend now running at **http://localhost:8000**  
-📚 API Documentation: **http://localhost:8000/docs**
+ Backend now running at **http://localhost:8000**  
+ API Documentation: **http://localhost:8000/docs**
 
 #### 3. Frontend Setup (New Terminal)
 
@@ -118,7 +118,7 @@ npm install
 npm run dev
 ```
 
-✅ Frontend now running at **http://localhost:5173**
+ Frontend now running at **http://localhost:5173**
 
 #### 4. Access the Application
 
@@ -126,7 +126,7 @@ Open your browser to **http://localhost:5173**
 
 ---
 
-## 🔑 Demo Login Credentials
+##  Demo Login Credentials
 
 The seed script creates demo accounts for testing:
 
@@ -140,41 +140,41 @@ The seed script creates demo accounts for testing:
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 medical_webseite_2/
-├── backend/                    # FastAPI backend
-│   ├── alembic/               # Database migrations
-│   ├── auth/                  # Authentication utilities
-│   ├── models/                # SQLAlchemy models (13 models)
-│   ├── routers/               # API endpoints (8 routers)
-│   ├── schemas/               # Pydantic schemas
-│   ├── config.py              # Configuration
-│   ├── database.py            # Database connection
-│   ├── main.py                # FastAPI app
-│   ├── seed_data.py           # Demo data script
-│   ├── requirements.txt       # Python dependencies
-│   └── .env.example           # Environment template
-├── frontend/                   # React frontend
-│   ├── src/
-│   │   ├── api/               # API client (Axios)
-│   │   ├── auth/              # Authentication context
-│   │   ├── layout/            # Main layout components
-│   │   ├── pages/             # Page components (11 pages)
-│   │   ├── App.tsx            # Main app with routing
-│   │   ├── main.tsx           # Entry point
-│   │   └── theme.ts           # Material UI theme
-│   ├── package.json           # Node dependencies
-│   └── vite.config.ts         # Vite configuration
-├── docs/
-│   └── documentation.md       # Technical documentation
-└── README.md                  # This file
+ backend/                    # FastAPI backend
+    alembic/               # Database migrations
+    auth/                  # Authentication utilities
+    models/                # SQLAlchemy models (13 models)
+    routers/               # API endpoints (8 routers)
+    schemas/               # Pydantic schemas
+    config.py              # Configuration
+    database.py            # Database connection
+    main.py                # FastAPI app
+    seed_data.py           # Demo data script
+    requirements.txt       # Python dependencies
+    .env.example           # Environment template
+ frontend/                   # React frontend
+    src/
+       api/               # API client (Axios)
+       auth/              # Authentication context
+       layout/            # Main layout components
+       pages/             # Page components (11 pages)
+       App.tsx            # Main app with routing
+       main.tsx           # Entry point
+       theme.ts           # Material UI theme
+    package.json           # Node dependencies
+    vite.config.ts         # Vite configuration
+ docs/
+    documentation.md       # Technical documentation
+ README.md                  # This file
 ```
 
 ---
 
-## 🧪 Testing
+##  Testing
 
 ### Backend Tests
 ```bash
@@ -190,7 +190,7 @@ npm run test
 
 ---
 
-## 🗄️ Database
+##  Database
 
 The application uses **SQLite** for simplicity (file: `backend/app.db`).
 
@@ -205,7 +205,7 @@ Delete `backend/app.db` and run `python seed_data.py` again.
 
 ---
 
-## 📡 API Endpoints
+##  API Endpoints
 
 Full API documentation available at **http://localhost:8000/docs** when backend is running.
 
@@ -222,24 +222,24 @@ Full API documentation available at **http://localhost:8000/docs** when backend 
 
 ---
 
-## 🔒 Security
+##  Security
 
-- ✅ JWT-based authentication
-- ✅ Password hashing with bcrypt
-- ✅ Role-based access control (Patient/Doctor)
-- ✅ API route protection
-- ⚠️ **Not production-ready** - educational demo only
+-  JWT-based authentication
+-  Password hashing with bcrypt
+-  Role-based access control (Patient/Doctor)
+-  API route protection
+-  **Not production-ready** - educational demo only
 
 ---
 
-## 🌐 Ports
+##  Ports
 
 - **Backend:** `8000` (FastAPI)
 - **Frontend:** `5173` (Vite dev server)
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### Backend won't start
 - Check Python version: `python --version` (need 3.11+)
@@ -261,7 +261,7 @@ Full API documentation available at **http://localhost:8000/docs** when backend 
 
 ---
 
-## 📚 Documentation
+##  Documentation
 
 Full technical documentation is available in [`docs/documentation.md`](./docs/documentation.md), including:
 - System architecture diagrams
@@ -273,7 +273,7 @@ Full technical documentation is available in [`docs/documentation.md`](./docs/do
 
 ---
 
-## 🎓 Educational Context
+##  Educational Context
 
 This project was developed as part of a medical engineering course to demonstrate:
 - Modern full-stack web development
@@ -285,7 +285,7 @@ This project was developed as part of a medical engineering course to demonstrat
 
 ---
 
-## ⚖️ Limitations
+##  Limitations
 
 - Not certified for medical use
 - SQLite not suitable for production
@@ -296,7 +296,7 @@ This project was developed as part of a medical engineering course to demonstrat
 
 ---
 
-## 🤝 For Another Machine Setup
+##  For Another Machine Setup
 
 To run this project on a different computer:
 
@@ -309,7 +309,7 @@ The project uses SQLite (no external database needed) and includes demo data, ma
 
 ---
 
-## 📧 Contact
+##  Contact
 
 For questions about this educational project:
 - Repository: https://github.com/MohammedJamalDawoud/medical_webseite_2
@@ -317,7 +317,7 @@ For questions about this educational project:
 
 ---
 
-## ⚠️ Final Reminder
+##  Final Reminder
 
 **This is an educational demonstration.**  
 **DO NOT use for real medical purposes.**  

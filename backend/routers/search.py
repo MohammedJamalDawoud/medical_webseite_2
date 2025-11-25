@@ -4,7 +4,7 @@ from sqlalchemy import or_
 from typing import List, Dict, Any
 from database import get_db
 from models import Doctor, HealthTip, FAQ, User
-from auth.auth import get_current_user
+from auth.utils import get_current_user
 
 router = APIRouter(
     prefix="/search",

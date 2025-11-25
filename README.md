@@ -71,31 +71,6 @@ cd medical_webseite_2
 ```
 
 #### 2. Backend Setup
-
-```bash
-# Navigate to backend folder
-cd backend
-
-# Create Python virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# Windows:
-venv\Scripts\activate
-# Mac/Linux:
-# source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Create .env file from example (SQLite default)
-copy .env.example .env
-# Mac/Linux: cp .env.example .env
-
-# Create database and seed demo data
-python seed_data.py
-
-# Start backend server
 uvicorn main:app --reload
 ```
 

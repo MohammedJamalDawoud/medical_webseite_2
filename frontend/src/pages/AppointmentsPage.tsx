@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Typography,
@@ -12,6 +13,10 @@ import {
     Stack,
     CircularProgress,
     Paper,
+    Tabs,
+    Tab,
+    IconButton,
+    Tooltip,
 } from '@mui/material';
 import {
     CalendarMonth,
@@ -22,12 +27,17 @@ import {
     Schedule,
     Cancel,
     Person,
+    Edit,
+    AccessTime,
+    Event,
 } from '@mui/icons-material';
 import apiClient from '../api/client';
-import { format } from 'date-fns';
+import { format, isPast, isFuture, differenceInHours, differenceInMinutes } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 export default function AppointmentsPage() {
+    const [tabValue, setTabValue] = useState(0);
+
     const { data: appointments, isLoading } = useQuery({
         queryKey: ['appointments'],
         queryFn: async () => {
@@ -74,6 +84,27 @@ export default function AppointmentsPage() {
         return labels[type] || type;
     };
 
+    const getCountdown = (date: string, time: string) => {
+        const appointmentDate = new Date(`${date}T${time}`);
+        const now = new Date();
+
+        if (isPast(appointmentDate)) return null;
+
+        const hours = differenceInHours(appointmentDate, now);
+        const minutes = differenceInMinutes(appointmentDate, now) % 60;
+
+        if (hours < 24) {
+            return `In ${hours}h ${minutes}m`;
+        } else {
+            const days = Math.floor(hours / 24);
+            return `In ${days} Tag${days > 1 ? 'en' : ''}`;
+        }
+    };
+
+    const isUpcoming = (date: string, time: string) => {
+        return isFuture(new Date(`${date}T${time}`));
+    };
+
     if (isLoading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -81,6 +112,16 @@ export default function AppointmentsPage() {
             </Box>
         );
     }
+
+    const upcomingAppointments = appointments?.filter((apt: any) =>
+        isUpcoming(apt.date, apt.time) && apt.status !== 'CANCELLED'
+    ) || [];
+
+    const pastAppointments = appointments?.filter((apt: any) =>
+        !isUpcoming(apt.date, apt.time) || apt.status === 'CANCELLED'
+    ) || [];
+
+    const displayedAppointments = tabValue === 0 ? upcomingAppointments : pastAppointments;
 
     return (
         <Box>
@@ -104,150 +145,206 @@ export default function AppointmentsPage() {
                 </Typography>
             </Box>
 
-            {appointments && appointments.length > 0 ? (
+            {/* Tabs */}
+            <Paper sx={{ mb: 3, borderRadius: 2 }}>
+                <Tabs
+                    value={tabValue}
+                    onChange={(_, newValue) => setTabValue(newValue)}
+                    sx={{
+                        '& .MuiTab-root': {
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            fontSize: '1rem',
+                        },
+                    }}
+                >
+                    <Tab
+                        label={`Bevorstehend (${upcomingAppointments.length})`}
+                        icon={<Event />}
+                        iconPosition="start"
+                    />
+                    <Tab
+                        label={`Vergangen (${pastAppointments.length})`}
+                        icon={<CheckCircle />}
+                        iconPosition="start"
+                    />
+                </Tabs>
+            </Paper>
+
+            {displayedAppointments.length > 0 ? (
                 <Grid container spacing={3}>
-                    {appointments.map((apt: any, index: number) => (
-                        <Grid item xs={12} md={6} key={apt.id}>
-                            <Card
-                                sx={{
-                                    height: '100%',
-                                    borderRadius: 3,
-                                    borderLeft: `4px solid ${getStatusColor(apt.status)}`,
-                                    transition: 'all 0.3s ease',
-                                    '&:hover': {
-                                        transform: 'translateY(-4px)',
-                                        boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                                    },
-                                    animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
-                                    '@keyframes fadeInUp': {
-                                        from: {
-                                            opacity: 0,
-                                            transform: 'translateY(20px)',
+                    {displayedAppointments.map((apt: any, index: number) => {
+                        const countdown = getCountdown(apt.date, apt.time);
+                        return (
+                            <Grid item xs={12} md={6} key={apt.id}>
+                                <Card
+                                    sx={{
+                                        height: '100%',
+                                        borderRadius: 3,
+                                        borderLeft: `4px solid ${getStatusColor(apt.status)}`,
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            transform: 'translateY(-4px)',
+                                            boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
                                         },
-                                        to: {
-                                            opacity: 1,
-                                            transform: 'translateY(0)',
+                                        animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
+                                        '@keyframes fadeInUp': {
+                                            from: {
+                                                opacity: 0,
+                                                transform: 'translateY(20px)',
+                                            },
+                                            to: {
+                                                opacity: 1,
+                                                transform: 'translateY(0)',
+                                            },
                                         },
-                                    },
-                                }}
-                            >
-                                <CardContent sx={{ p: 3 }}>
-                                    {/* Header with Doctor Info */}
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                        <Avatar
-                                            sx={{
-                                                width: 48,
-                                                height: 48,
-                                                mr: 2,
-                                                background: `linear-gradient(135deg, ${getStatusColor(apt.status)}40 0%, ${getStatusColor(apt.status)} 100%)`,
-                                                color: getStatusColor(apt.status),
-                                            }}
-                                        >
-                                            <Person />
-                                        </Avatar>
-                                        <Box sx={{ flexGrow: 1 }}>
-                                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                {apt.doctor_name}
-                                            </Typography>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                                                <Chip
-                                                    label={getStatusLabel(apt.status)}
-                                                    size="small"
-                                                    sx={{
-                                                        background: `${getStatusColor(apt.status)}20`,
-                                                        color: getStatusColor(apt.status),
-                                                        fontWeight: 600,
-                                                        borderRadius: 1.5,
-                                                    }}
-                                                />
-                                                <Chip
-                                                    icon={getTypeIcon(apt.type)}
-                                                    label={getTypeLabel(apt.type)}
-                                                    size="small"
-                                                    variant="outlined"
-                                                    sx={{
-                                                        borderRadius: 1.5,
-                                                        borderColor: getStatusColor(apt.status),
-                                                        color: getStatusColor(apt.status),
-                                                    }}
-                                                />
+                                    }}
+                                >
+                                    <CardContent sx={{ p: 3 }}>
+                                        {/* Header with Doctor Info */}
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                            <Avatar
+                                                sx={{
+                                                    width: 48,
+                                                    height: 48,
+                                                    mr: 2,
+                                                    background: `linear-gradient(135deg, ${getStatusColor(apt.status)}40 0%, ${getStatusColor(apt.status)} 100%)`,
+                                                    color: getStatusColor(apt.status),
+                                                }}
+                                            >
+                                                <Person />
+                                            </Avatar>
+                                            <Box sx={{ flexGrow: 1 }}>
+                                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                                    {apt.doctor_name}
+                                                </Typography>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+                                                    <Chip
+                                                        label={getStatusLabel(apt.status)}
+                                                        size="small"
+                                                        sx={{
+                                                            background: `${getStatusColor(apt.status)}20`,
+                                                            color: getStatusColor(apt.status),
+                                                            fontWeight: 600,
+                                                            borderRadius: 1.5,
+                                                        }}
+                                                    />
+                                                    <Chip
+                                                        icon={getTypeIcon(apt.type)}
+                                                        label={getTypeLabel(apt.type)}
+                                                        size="small"
+                                                        variant="outlined"
+                                                        sx={{
+                                                            borderRadius: 1.5,
+                                                            borderColor: getStatusColor(apt.status),
+                                                            color: getStatusColor(apt.status),
+                                                        }}
+                                                    />
+                                                    {countdown && (
+                                                        <Chip
+                                                            icon={<AccessTime sx={{ fontSize: 16 }} />}
+                                                            label={countdown}
+                                                            size="small"
+                                                            sx={{
+                                                                background: '#10b98120',
+                                                                color: '#10b981',
+                                                                fontWeight: 600,
+                                                                fontSize: '0.75rem',
+                                                            }}
+                                                        />
+                                                    )}
+                                                </Box>
                                             </Box>
                                         </Box>
-                                    </Box>
 
-                                    <Divider sx={{ my: 2 }} />
+                                        <Divider sx={{ my: 2 }} />
 
-                                    {/* Date and Time */}
-                                    <Stack spacing={1.5}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <CalendarMonth sx={{ fontSize: 20, color: 'text.secondary', mr: 1.5 }} />
-                                            <Typography variant="body2">
-                                                <strong>Datum:</strong> {format(new Date(apt.date + 'T00:00:00'), 'EEEE, dd. MMMM yyyy', { locale: de })}
-                                            </Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <Schedule sx={{ fontSize: 20, color: 'text.secondary', mr: 1.5 }} />
-                                            <Typography variant="body2">
-                                                <strong>Uhrzeit:</strong> {apt.time} Uhr
-                                            </Typography>
-                                        </Box>
-                                    </Stack>
+                                        {/* Date and Time */}
+                                        <Stack spacing={1.5}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                <CalendarMonth sx={{ fontSize: 20, color: 'text.secondary', mr: 1.5 }} />
+                                                <Typography variant="body2">
+                                                    <strong>Datum:</strong> {format(new Date(apt.date + 'T00:00:00'), 'EEEE, dd. MMMM yyyy', { locale: de })}
+                                                </Typography>
+                                            </Box>
+                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                <Schedule sx={{ fontSize: 20, color: 'text.secondary', mr: 1.5 }} />
+                                                <Typography variant="body2">
+                                                    <strong>Uhrzeit:</strong> {apt.time} Uhr
+                                                </Typography>
+                                            </Box>
+                                        </Stack>
 
-                                    {/* Notes if available */}
-                                    {apt.notes && (
-                                        <Paper
-                                            elevation={0}
-                                            sx={{
-                                                mt: 2,
-                                                p: 1.5,
-                                                bgcolor: 'grey.50',
-                                                borderRadius: 2,
-                                            }}
-                                        >
-                                            <Typography variant="caption" color="text.secondary">
-                                                <strong>Notizen:</strong> {apt.notes}
-                                            </Typography>
-                                        </Paper>
-                                    )}
+                                        {/* Notes if available */}
+                                        {apt.notes && (
+                                            <Paper
+                                                elevation={0}
+                                                sx={{
+                                                    mt: 2,
+                                                    p: 1.5,
+                                                    bgcolor: 'grey.50',
+                                                    borderRadius: 2,
+                                                }}
+                                            >
+                                                <Typography variant="caption" color="text.secondary">
+                                                    <strong>Notizen:</strong> {apt.notes}
+                                                </Typography>
+                                            </Paper>
+                                        )}
 
-                                    {/* Action Buttons */}
-                                    {apt.status === 'CONFIRMED' && (
-                                        <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
-                                            {apt.type === 'VIDEO' && (
+                                        {/* Action Buttons */}
+                                        {apt.status === 'CONFIRMED' && tabValue === 0 && (
+                                            <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
+                                                {apt.type === 'VIDEO' && (
+                                                    <Button
+                                                        fullWidth
+                                                        variant="contained"
+                                                        startIcon={<VideoCall />}
+                                                        sx={{
+                                                            borderRadius: 2,
+                                                            textTransform: 'none',
+                                                            fontWeight: 600,
+                                                            background: `linear-gradient(135deg, ${getStatusColor(apt.status)} 0%, ${getStatusColor(apt.status)}CC 100%)`,
+                                                        }}
+                                                    >
+                                                        Beitreten
+                                                    </Button>
+                                                )}
+                                                <Tooltip title="Termin verschieben">
+                                                    <IconButton
+                                                        sx={{
+                                                            border: '2px solid',
+                                                            borderColor: 'primary.main',
+                                                            color: 'primary.main',
+                                                            '&:hover': {
+                                                                bgcolor: 'primary.50',
+                                                            },
+                                                        }}
+                                                    >
+                                                        <Edit />
+                                                    </IconButton>
+                                                </Tooltip>
                                                 <Button
                                                     fullWidth
-                                                    variant="contained"
-                                                    startIcon={<VideoCall />}
+                                                    variant="outlined"
+                                                    startIcon={<Cancel />}
+                                                    color="error"
                                                     sx={{
                                                         borderRadius: 2,
                                                         textTransform: 'none',
-                                                        fontWeight: 600,
-                                                        background: `linear-gradient(135deg, ${getStatusColor(apt.status)} 0%, ${getStatusColor(apt.status)}CC 100%)`,
+                                                        borderWidth: 2,
+                                                        '&:hover': { borderWidth: 2 },
                                                     }}
                                                 >
-                                                    Beitreten
+                                                    Absagen
                                                 </Button>
-                                            )}
-                                            <Button
-                                                fullWidth
-                                                variant="outlined"
-                                                startIcon={<Cancel />}
-                                                color="error"
-                                                sx={{
-                                                    borderRadius: 2,
-                                                    textTransform: 'none',
-                                                    borderWidth: 2,
-                                                    '&:hover': { borderWidth: 2 },
-                                                }}
-                                            >
-                                                Absagen
-                                            </Button>
-                                        </Stack>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    ))}
+                                            </Stack>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        );
+                    })}
                 </Grid>
             ) : (
                 <Paper
@@ -274,23 +371,28 @@ export default function AppointmentsPage() {
                         <CalendarMonth sx={{ fontSize: 40, color: '#667eea' }} />
                     </Box>
                     <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                        Keine Termine vorhanden
+                        {tabValue === 0 ? 'Keine bevorstehenden Termine' : 'Keine vergangenen Termine'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        Buchen Sie Ihren ersten Termin mit einem unserer Ärzte
+                        {tabValue === 0
+                            ? 'Buchen Sie Ihren ersten Termin mit einem unserer Ärzte'
+                            : 'Ihre abgeschlossenen Termine werden hier angezeigt'
+                        }
                     </Typography>
-                    <Button
-                        variant="contained"
-                        sx={{
-                            px: 4,
-                            py: 1.2,
-                            borderRadius: 2,
-                            textTransform: 'none',
-                            fontWeight: 600,
-                        }}
-                    >
-                        Termin buchen
-                    </Button>
+                    {tabValue === 0 && (
+                        <Button
+                            variant="contained"
+                            sx={{
+                                px: 4,
+                                py: 1.2,
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                fontWeight: 600,
+                            }}
+                        >
+                            Termin buchen
+                        </Button>
+                    )}
                 </Paper>
             )}
         </Box>

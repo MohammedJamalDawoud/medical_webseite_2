@@ -71,7 +71,35 @@ cd medical_webseite_2
 ```
 
 #### 2. Backend Setup
-uvicorn main:app --reload
+
+Open a terminal (PowerShell or Command Prompt) and run:
+
+```bash
+# Navigate to backend folder
+cd backend
+
+# Create Python virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# Windows (PowerShell):
+.\venv\Scripts\Activate.ps1
+# Windows (Command Prompt):
+.\venv\Scripts\activate.bat
+# Mac/Linux:
+# source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Create .env file
+copy .env.example .env
+
+# Seed the database with demo data
+python seed_data.py
+
+# Start backend server
+python -m uvicorn main:app --reload
 ```
 
 ✅ Backend now running at **http://localhost:8000**  

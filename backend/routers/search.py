@@ -3,7 +3,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List, Dict, Any
 from database import get_db
-from models import Doctor, HealthTip, FAQ, User
+from models.doctor import Doctor
+from models.health_tip import HealthTip
+from models.faq import FAQ
+from models.user import User
 from auth.utils import get_current_user
 
 router = APIRouter(

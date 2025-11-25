@@ -72,6 +72,8 @@ def list_appointments(
     List appointments for the current user.
     Patients see their own appointments. Doctors see their patients' appointments.
     """
+    from sqlalchemy.orm import joinedload
+    
     if current_user.role == UserRole.PATIENT:
         patient = db.query(Patient).filter(Patient.user_id == current_user.id).first()
         query = db.query(Appointment).filter(Appointment.patient_id == patient.id)
@@ -87,9 +89,15 @@ def list_appointments(
         else:
             query = query.filter(Appointment.date < today)
     
+    # Add eager loading to prevent N+1 queries
+    query = query.options(
+        joinedload(Appointment.patient).joinedload(Patient.user),
+        joinedload(Appointment.doctor).joinedload(Doctor.user)
+    )
+    
     appointments = query.order_by(Appointment.date.desc(), Appointment.time.desc()).all()
     
-    # Build responses with related data
+    # Build responses with related data (now optimized)
     result = []
     for apt in appointments:
         result.append({

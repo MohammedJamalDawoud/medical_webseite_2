@@ -1,9 +1,10 @@
-"""Router for health tips and FAQ."""
+"""Router for health tips and FAQ with pagination and caching."""
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
+from functools import lru_cache
 
 from database import get_db
 from models.health_tip import HealthTip, HealthTipCategory
@@ -19,7 +20,7 @@ class HealthTipResponse(BaseModel):
     content: str
     category: str
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -29,35 +30,41 @@ class FAQResponse(BaseModel):
     question: str
     answer: str
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 @router.get("/health-tips", response_model=List[HealthTipResponse])
+@lru_cache(maxsize=128)
 def get_health_tips(
     category: Optional[str] = Query(None, description="Filter by category"),
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=200, description="Maximum number of records to return"),
     db: Session = Depends(get_db)
 ):
     """
-    Get health tips, optionally filtered by category.
+    Retrieve health tips, optionally filtered by category, with pagination.
     Categories: bewegung, ernährung, prävention, gesundheit
     """
     query = db.query(HealthTip)
-    
     if category:
         try:
             cat_enum = HealthTipCategory(category)
             query = query.filter(HealthTip.category == cat_enum)
         except ValueError:
-            pass  # Invalid category, return all
-    
-    tips = query.order_by(HealthTip.created_at.desc()).all()
-    return tips
+            pass  # Invalid category, ignore filter
+    query = query.order_by(HealthTip.created_at.desc()).offset(skip).limit(limit)
+    return query.all()
 
 @router.get("/faq", response_model=List[FAQResponse])
-def get_faqs(db: Session = Depends(get_db)):
+@lru_cache(maxsize=128)
+def get_faqs(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=200, description="Maximum number of records to return"),
+    db: Session = Depends(get_db)
+):
     """
-    Get all FAQs.
+    Retrieve FAQs with pagination support.
     """
-    faqs = db.query(FAQ).order_by(FAQ.created_at.desc()).all()
-    return faqs
+    query = db.query(FAQ).order_by(FAQ.created_at.desc()).offset(skip).limit(limit)
+    return query.all()

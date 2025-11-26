@@ -70,3 +70,6 @@ alembic/__pycache__/
 
 # Uploads
 backend/uploads/
+
+# University Documentation (private)
+PROJEKTDOKUMENTATION.md

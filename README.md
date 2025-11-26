@@ -17,59 +17,144 @@ Doctors can manage appointments, create prescriptions, and upload medical docume
 **Backend:** Python, FastAPI, SQLAlchemy, SQLite  
 **Frontend:** React, TypeScript, Material UI, Vite
 
-## Getting Started
+## Quick Start (Recommended)
 
 ### Prerequisites
-- Python 3.11 or higher
+- Python 3.9 or higher
 - Node.js 18 or higher
 
-### Installation
+### Automated Setup (Easiest)
 
-1. Clone the repository:
+Run the automated setup script that handles everything:
+
+```powershell
+.\setup.ps1
+```
+
+This script will:
+- Create `.env` file in backend
+- Set up Python virtual environment
+- Install all dependencies
+- Create and seed the database with demo data
+
+Then start the servers as instructed by the script.
+
+---
+
+## Manual Setup (Alternative)
+
+If you prefer to set up manually or the automated script doesn't work:
+
+### 1. Clone the repository
 ```bash
 git clone https://github.com/MohammedJamalDawoud/medical_webseite_2.git
 cd medical_webseite_2
 ```
 
-2. Set up the backend:
+### 2. Backend Setup
+
 ```bash
 cd backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+
+# Create .env file (IMPORTANT!)
 copy .env.example .env
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+.\venv\Scripts\Activate.ps1   # Windows PowerShell
+# OR
+source venv/bin/activate       # macOS/Linux
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Create database and demo data (IMPORTANT!)
 python seed_data.py
+
+# Start backend server
 python -m uvicorn main:app --reload
 ```
 
-The backend will run at http://localhost:8000
+✅ Backend will run at **http://localhost:8000**
 
-3. Set up the frontend (in a new terminal):
+### 3. Frontend Setup (in a NEW terminal)
+
 ```bash
 cd frontend
+
+# Install dependencies
 npm install
+
+# Start frontend development server
 npm run dev
 ```
 
-The frontend will run at http://localhost:5173
+✅ Frontend will run at **http://localhost:5173**
 
-### Demo Accounts
+---
+
+## Demo Accounts
+
+After running `seed_data.py`, you can login with:
 
 **Patient:**
-- Email: demo.patient@example.com
-- Password: password123
+- Email: `demo.patient@example.com`
+- Password: `password123`
 
 **Doctor:**
-- Email: demo.doctor@example.com
-- Password: password123
+- Email: `demo.doctor@example.com`
+- Password: `password123`
+
+---
+
+## Troubleshooting
+
+### Login fails with "Login fehlgeschlagen"
+
+This usually means the database wasn't seeded. Fix it by:
+
+```bash
+cd backend
+.\venv\Scripts\Activate.ps1  # Activate virtual environment
+python seed_data.py           # Re-run seed script
+```
+
+### Backend not starting
+
+Make sure `.env` file exists in the `backend` folder:
+
+```bash
+cd backend
+copy .env.example .env
+```
+
+### Frontend can't connect to backend
+
+1. Make sure backend is running on http://localhost:8000
+2. Check that Vite dev server shows the proxy configuration
+3. Restart the frontend: `npm run dev`
+
+---
 
 ## Project Structure
 
 ```
 medical_webseite_2/
 ├── backend/          # FastAPI server
+│   ├── auth/         # Authentication logic
+│   ├── models/       # Database models
+│   ├── routers/      # API endpoints
+│   ├── seed_data.py  # Database seeder
+│   └── .env.example  # Environment template
 ├── frontend/         # React application
-└── docs/            # Documentation
+│   ├── src/
+│   │   ├── pages/    # Page components
+│   │   ├── components/ # Reusable components
+│   │   └── api/      # API client
+│   └── vite.config.ts
+└── setup.ps1         # Automated setup script
 ```
 
 ## Features
@@ -78,14 +163,14 @@ medical_webseite_2/
 - Appointment scheduling
 - Prescription management
 - Medical reports with PDF download
-- Lab results viewing
+- Lab results with trend visualization
 - Health tips library
 - FAQ section
 - Symptom checker
 
 ## API Documentation
 
-When the backend is running, visit http://localhost:8000/docs for the interactive API documentation.
+When the backend is running, visit **http://localhost:8000/docs** for the interactive API documentation (Swagger UI).
 
 ## Notes
 

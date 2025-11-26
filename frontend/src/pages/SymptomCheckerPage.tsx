@@ -160,7 +160,7 @@ export default function SymptomCheckerPage() {
                     Symptom-Checker
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
-                    Erhalten Sie eine erste Einschätzung Ihrer Beschwerden durch unser KI-gestütztes Tool
+                    Erhalten Sie eine erste Einschätzung Ihrer Beschwerden durch unser digitales Tool
                 </Typography>
             </Box>
 

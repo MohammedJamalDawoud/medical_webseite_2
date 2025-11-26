@@ -787,7 +787,7 @@ All 9 pages of the Telemedicine Patient Portal have been comprehensively enhance
    - Offline capabilities
    - Push notifications
 
-5. **AI Features:**
+5. **Advanced Features:**
    - Intelligent symptom checker
    - Automated appointment scheduling
    - Chatbot support

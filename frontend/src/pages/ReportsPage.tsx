@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import {
     Typography,
     Card,
@@ -12,6 +13,11 @@ import {
     Avatar,
     Chip,
     Divider,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
 } from '@mui/material';
 import {
     Download,
@@ -21,10 +27,14 @@ import {
     Share,
     Print,
     Visibility,
+    Science,
+    Image,
 } from '@mui/icons-material';
-import apiClient from '../api/client';
-import { format } from 'date-fns';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { de } from 'date-fns/locale';
+import { format } from 'date-fns';
+import apiClient from '../api/client';
 
 export default function ReportsPage() {
     const { data: reports, isLoading } = useQuery({
@@ -34,6 +44,14 @@ export default function ReportsPage() {
             return res.data;
         },
     });
+
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({
+        start: null,
+        end: null,
+    });
+    const [previewOpen, setPreviewOpen] = useState(false);
+    const [previewReport, setPreviewReport] = useState<any>(null);
 
     const handleDownload = async (reportId: number) => {
         const res = await apiClient.get(`/reports/${reportId}/download`, { responseType: 'blob' });
@@ -46,6 +64,16 @@ export default function ReportsPage() {
         link.remove();
     };
 
+    const openPreview = (report: any) => {
+        setPreviewReport(report);
+        setPreviewOpen(true);
+    };
+
+    const closePreview = () => {
+        setPreviewOpen(false);
+        setPreviewReport(null);
+    };
+
     if (isLoading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -54,9 +82,19 @@ export default function ReportsPage() {
         );
     }
 
+    const filteredReports = reports
+        ? reports.filter((r: any) => {
+            const matchesCategory =
+                selectedCategories.length === 0 || selectedCategories.includes(r.category?.toLowerCase());
+            const matchesDate =
+                (!dateRange.start || new Date(r.created_at) >= dateRange.start) &&
+                (!dateRange.end || new Date(r.created_at) <= dateRange.end);
+            return matchesCategory && matchesDate;
+        })
+        : [];
+
     return (
         <Box>
-            {/* Header */}
             <Box sx={{ mb: 4 }}>
                 <Typography
                     variant="h3"
@@ -64,7 +102,6 @@ export default function ReportsPage() {
                     sx={{
                         fontWeight: 700,
                         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        backgroundClip: 'text',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                     }}
@@ -75,50 +112,73 @@ export default function ReportsPage() {
                     Ihre medizinischen Befunde und Arztbriefe
                 </Typography>
             </Box>
-
-            {reports && reports.length > 0 ? (
+            <Box sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+                {['lab', 'consultation', 'imaging'].map((cat) => (
+                    <Chip
+                        key={cat}
+                        label={cat.charAt(0).toUpperCase() + cat.slice(1)}
+                        clickable
+                        color={selectedCategories.includes(cat) ? 'primary' : 'default'}
+                        onClick={() => {
+                            setSelectedCategories((prev) =>
+                                prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+                            );
+                        }}
+                    />
+                ))}
+                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={de}>
+                    <DatePicker
+                        label="Startdatum"
+                        value={dateRange.start}
+                        onChange={(newValue: Date | null) => setDateRange((prev) => ({ ...prev, start: newValue }))}
+                        slotProps={{ textField: { size: 'small' } }}
+                    />
+                    <DatePicker
+                        label="Enddatum"
+                        value={dateRange.end}
+                        onChange={(newValue: Date | null) => setDateRange((prev) => ({ ...prev, end: newValue }))}
+                        slotProps={{ textField: { size: 'small' } }}
+                    />
+                </LocalizationProvider>
+            </Box>
+            {filteredReports && filteredReports.length > 0 ? (
                 <Grid container spacing={3}>
-                    {reports.map((report: any, index: number) => (
+                    {filteredReports.map((report: any, index: number) => (
                         <Grid item xs={12} key={report.id}>
                             <Card
                                 sx={{
                                     borderRadius: 3,
                                     transition: 'all 0.3s ease',
-                                    '&:hover': {
-                                        transform: 'translateY(-4px)',
-                                        boxShadow: '0 12px 24px rgba(0,0,0,0.1)',
-                                    },
+                                    '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 24px rgba(0,0,0,0.1)' },
                                     animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
-                                    '@keyframes fadeInUp': {
-                                        from: { opacity: 0, transform: 'translateY(20px)' },
-                                        to: { opacity: 1, transform: 'translateY(0)' },
-                                    },
                                 }}
                             >
                                 <CardContent sx={{ p: 3 }}>
-                                    <Grid container spacing={3}>
-                                        {/* Icon Section */}
-                                        <Grid item xs={12} md={1} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+                                    <Grid container spacing={3} alignItems="center">
+                                        <Grid item xs={12} md={1} sx={{ display: 'flex', justifyContent: 'center' }}>
                                             <Avatar
                                                 sx={{
                                                     width: 64,
                                                     height: 64,
                                                     bgcolor: 'primary.light',
-                                                    color: 'primary.main',
                                                     background: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
                                                 }}
                                             >
-                                                <Description sx={{ fontSize: 32, color: '#fff' }} />
+                                                {report.category === 'lab' && <Science sx={{ fontSize: 32, color: '#fff' }} />}
+                                                {report.category === 'consultation' && <Person sx={{ fontSize: 32, color: '#fff' }} />}
+                                                {report.category === 'imaging' && <Image sx={{ fontSize: 32, color: '#fff' }} />}
                                             </Avatar>
                                         </Grid>
-
-                                        {/* Content Section */}
                                         <Grid item xs={12} md={8}>
                                             <Box sx={{ mb: 2 }}>
-                                                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                                                    {report.title}
-                                                </Typography>
-                                                <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                                        {report.title}
+                                                    </Typography>
+                                                    {report.status === 'new' && <Chip label="Neu" color="primary" size="small" />}
+                                                    {report.status === 'read' && <Chip label="Gelesen" color="default" size="small" />}
+                                                </Box>
+                                                <Stack direction="row" spacing={1} alignItems="center">
                                                     <Chip
                                                         icon={<Person sx={{ fontSize: '16px !important' }} />}
                                                         label={`Dr. ${report.doctor_name}`}
@@ -134,13 +194,12 @@ export default function ReportsPage() {
                                                         sx={{ borderRadius: 1.5 }}
                                                     />
                                                 </Stack>
+                                                <Divider sx={{ my: 2 }} />
                                                 <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-line', lineHeight: 1.6 }}>
                                                     {report.content}
                                                 </Typography>
                                             </Box>
                                         </Grid>
-
-                                        {/* Actions Section */}
                                         <Grid item xs={12} md={3}>
                                             <Stack spacing={1.5} justifyContent="center" height="100%">
                                                 <Button
@@ -160,6 +219,7 @@ export default function ReportsPage() {
                                                 <Button
                                                     variant="outlined"
                                                     startIcon={<Visibility />}
+                                                    onClick={() => openPreview(report)}
                                                     fullWidth
                                                     sx={{ borderRadius: 2, textTransform: 'none' }}
                                                 >
@@ -171,12 +231,14 @@ export default function ReportsPage() {
                                                         startIcon={<Share />}
                                                         fullWidth
                                                         sx={{ borderRadius: 2, textTransform: 'none', color: 'text.secondary' }}
+                                                        href={`mailto:?subject=${encodeURIComponent(report.title)}&body=${encodeURIComponent('Bitte prüfen Sie den Bericht hier: ' + window.location.origin + '/reports/' + report.id)}`}
                                                     >
                                                         Teilen
                                                     </Button>
                                                     <Button
                                                         variant="text"
                                                         startIcon={<Print />}
+                                                        onClick={() => handleDownload(report.id)}
                                                         fullWidth
                                                         sx={{ borderRadius: 2, textTransform: 'none', color: 'text.secondary' }}
                                                     >
@@ -205,7 +267,7 @@ export default function ReportsPage() {
                             width: 80,
                             height: 80,
                             borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #667eea20 0%, #764ba220 100%)',
+                            background: 'linear-gradient(135deg, #667ea20 0%, #764ba220 100%)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -223,6 +285,23 @@ export default function ReportsPage() {
                     </Typography>
                 </Paper>
             )}
+            <Dialog open={previewOpen} onClose={closePreview} maxWidth="md" fullWidth>
+                <DialogTitle>{previewReport?.title}</DialogTitle>
+                <DialogContent dividers>
+                    <iframe
+                        src={previewReport ? `/reports/${previewReport.id}/preview` : ''}
+                        style={{ width: '100%', height: '500px', border: 'none' }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closePreview} color="primary">
+                        Schließen
+                    </Button>
+                    <Button onClick={() => handleDownload(previewReport.id)} startIcon={<Print />} color="primary">
+                        Drucken
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

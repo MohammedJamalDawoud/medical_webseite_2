@@ -20,6 +20,8 @@ import {
     FormControl,
     InputLabel,
     Badge,
+    Snackbar,
+    Alert,
 } from '@mui/material';
 import {
     Search,
@@ -35,12 +37,18 @@ import {
 } from '@mui/icons-material';
 import apiClient from '../api/client';
 import { useDebounce } from 'use-debounce';
+import BookingDialog from '../components/BookingDialog';
 
 export default function DoctorSearchPage() {
     const [filters, setFilters] = useState({ name: '', specialization: '', city: '' });
     const [searchParams, setSearchParams] = useState<{ name?: string; specialization?: string; city?: string }>({});
     const [sortBy, setSortBy] = useState('name');
     const [debouncedFilters] = useDebounce(filters, 500);
+
+    // Booking State
+    const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+    const [bookingOpen, setBookingOpen] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
     // Auto-search with debounced filters
     useEffect(() => {
@@ -59,11 +67,11 @@ export default function DoctorSearchPage() {
             // Client-side sorting
             let sorted = res.data;
             if (sortBy === 'rating') {
-                sorted = [...sorted].sort((a, b) => (b.rating || 4.8) - (a.rating || 4.8));
+                sorted = [...sorted].sort((a: any, b: any) => (b.rating || 4.8) - (a.rating || 4.8));
             } else if (sortBy === 'experience') {
-                sorted = [...sorted].sort((a, b) => (b.years_of_experience || 10) - (a.years_of_experience || 10));
+                sorted = [...sorted].sort((a: any, b: any) => (b.years_of_experience || 10) - (a.years_of_experience || 10));
             } else if (sortBy === 'patients') {
-                sorted = [...sorted].sort((a, b) => (b.total_patients || 100) - (a.total_patients || 100));
+                sorted = [...sorted].sort((a: any, b: any) => (b.total_patients || 100) - (a.total_patients || 100));
             }
             return sorted;
         },
@@ -72,6 +80,15 @@ export default function DoctorSearchPage() {
     const handleClear = () => {
         setFilters({ name: '', specialization: '', city: '' });
         setSearchParams({});
+    };
+
+    const handleBookAppointment = (doctor: any) => {
+        setSelectedDoctor(doctor);
+        setBookingOpen(true);
+    };
+
+    const handleBookingSuccess = () => {
+        setSuccessMessage('Termin erfolgreich gebucht! Sie finden ihn unter "Meine Termine".');
     };
 
     const getSpecialtyColor = (specialty: string) => {
@@ -378,6 +395,7 @@ export default function DoctorSearchPage() {
                                             <Button
                                                 fullWidth
                                                 variant="contained"
+                                                onClick={() => handleBookAppointment(doctor)}
                                                 sx={{
                                                     mt: 3,
                                                     py: 1.2,
@@ -431,6 +449,24 @@ export default function DoctorSearchPage() {
                     </Typography>
                 </Paper>
             )}
+
+            <BookingDialog
+                open={bookingOpen}
+                onClose={() => setBookingOpen(false)}
+                doctor={selectedDoctor}
+                onSuccess={handleBookingSuccess}
+            />
+
+            <Snackbar
+                open={!!successMessage}
+                autoHideDuration={6000}
+                onClose={() => setSuccessMessage('')}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert onClose={() => setSuccessMessage('')} severity="success" sx={{ width: '100%' }}>
+                    {successMessage}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }

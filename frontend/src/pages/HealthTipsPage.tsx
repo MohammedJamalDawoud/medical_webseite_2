@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Typography,
@@ -15,9 +15,17 @@ import {
     CircularProgress,
     Paper,
     Avatar,
+    TextField,
+    InputAdornment,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Stack,
 } from '@mui/material';
 import {
     Favorite,
+    FavoriteBorder,
     Share,
     FitnessCenter,
     Restaurant,
@@ -25,11 +33,23 @@ import {
     Spa,
     ArrowForward,
     TipsAndUpdates,
+    Search,
+    AccessTime,
+    Facebook,
+    Twitter,
+    LinkedIn,
+    Email,
 } from '@mui/icons-material';
+import { useDebounce } from 'use-debounce';
 import apiClient from '../api/client';
 
 export default function HealthTipsPage() {
     const [category, setCategory] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch] = useDebounce(searchQuery, 300);
+    const [bookmarkedTips, setBookmarkedTips] = useState<Set<number>>(new Set());
+    const [shareDialogOpen, setShareDialogOpen] = useState(false);
+    const [selectedTip, setSelectedTip] = useState<any>(null);
 
     const { data: tips, isLoading } = useQuery({
         queryKey: ['health-tips', category],
@@ -39,6 +59,41 @@ export default function HealthTipsPage() {
             return res.data;
         },
     });
+
+    const filteredTips = useMemo(() => {
+        if (!tips) return [];
+        if (!debouncedSearch) return tips;
+
+        const query = debouncedSearch.toLowerCase();
+        return tips.filter((tip: any) =>
+            tip.title.toLowerCase().includes(query) ||
+            tip.content.toLowerCase().includes(query)
+        );
+    }, [tips, debouncedSearch]);
+
+    const calculateReadingTime = (content: string) => {
+        const wordsPerMinute = 200;
+        const words = content.split(/\s+/).length;
+        const minutes = Math.ceil(words / wordsPerMinute);
+        return minutes;
+    };
+
+    const toggleBookmark = (tipId: number) => {
+        setBookmarkedTips(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(tipId)) {
+                newSet.delete(tipId);
+            } else {
+                newSet.add(tipId);
+            }
+            return newSet;
+        });
+    };
+
+    const handleShare = (tip: any) => {
+        setSelectedTip(tip);
+        setShareDialogOpen(true);
+    };
 
     const getCategoryIcon = (cat: string) => {
         const icons: Record<string, JSX.Element> = {
@@ -82,6 +137,22 @@ export default function HealthTipsPage() {
                 </Typography>
             </Box>
 
+            {/* Search Bar */}
+            <TextField
+                fullWidth
+                placeholder="Tipps durchsuchen..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{ mb: 3 }}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <Search />
+                        </InputAdornment>
+                    ),
+                }}
+            />
+
             {/* Category Tabs */}
             <Paper
                 elevation={0}
@@ -123,117 +194,150 @@ export default function HealthTipsPage() {
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
                     <CircularProgress size={60} thickness={4} />
                 </Box>
-            ) : tips && tips.length > 0 ? (
-                <Grid container spacing={3}>
-                    {tips.map((tip: any, index: number) => (
-                        <Grid item xs={12} md={6} lg={4} key={tip.id}>
-                            <Card
+            ) : filteredTips && filteredTips.length > 0 ? (
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: {
+                            xs: '1fr',
+                            sm: 'repeat(2, 1fr)',
+                            lg: 'repeat(3, 1fr)',
+                        },
+                        gap: 3,
+                        gridAutoRows: 'auto',
+                    }}
+                >
+                    {filteredTips.map((tip: any, index: number) => (
+                        <Card
+                            key={tip.id}
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                borderRadius: 3,
+                                borderLeft: `4px solid ${getCategoryColor(tip.category)}`,
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    transform: 'translateY(-8px)',
+                                    boxShadow: '0 12px 24px rgba(0,0,0,0.1)',
+                                },
+                                animation: `fadeInUp 0.5s ease-out ${index * 0.05}s both`,
+                                '@keyframes fadeInUp': {
+                                    from: { opacity: 0, transform: 'translateY(20px)' },
+                                    to: { opacity: 1, transform: 'translateY(0)' },
+                                },
+                            }}
+                        >
+                            <Box
                                 sx={{
-                                    height: '100%',
+                                    height: 140,
+                                    background: `linear-gradient(135deg, ${getCategoryColor(tip.category)}40 0%, ${getCategoryColor(tip.category)}10 100%)`,
                                     display: 'flex',
-                                    flexDirection: 'column',
-                                    borderRadius: 3,
-                                    transition: 'all 0.3s ease',
-                                    '&:hover': {
-                                        transform: 'translateY(-8px)',
-                                        boxShadow: '0 12px 24px rgba(0,0,0,0.1)',
-                                    },
-                                    animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
-                                    '@keyframes fadeInUp': {
-                                        from: { opacity: 0, transform: 'translateY(20px)' },
-                                        to: { opacity: 1, transform: 'translateY(0)' },
-                                    },
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    position: 'relative',
+                                    overflow: 'hidden',
                                 }}
                             >
                                 <Box
                                     sx={{
-                                        height: 140,
-                                        background: `linear-gradient(135deg, ${getCategoryColor(tip.category)}40 0%, ${getCategoryColor(tip.category)}10 100%)`,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        position: 'relative',
-                                        overflow: 'hidden',
+                                        position: 'absolute',
+                                        top: -20,
+                                        right: -20,
+                                        width: 100,
+                                        height: 100,
+                                        borderRadius: '50%',
+                                        background: 'rgba(255,255,255,0.2)',
+                                    }}
+                                />
+                                <Avatar
+                                    sx={{
+                                        width: 64,
+                                        height: 64,
+                                        bgcolor: 'white',
+                                        color: getCategoryColor(tip.category),
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                     }}
                                 >
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            top: -20,
-                                            right: -20,
-                                            width: 100,
-                                            height: 100,
-                                            borderRadius: '50%',
-                                            background: 'rgba(255,255,255,0.2)',
-                                        }}
-                                    />
-                                    <Avatar
-                                        sx={{
-                                            width: 64,
-                                            height: 64,
-                                            bgcolor: 'white',
-                                            color: getCategoryColor(tip.category),
-                                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                        }}
-                                    >
-                                        {getCategoryIcon(tip.category)}
-                                    </Avatar>
-                                    <Chip
-                                        label={tip.category}
-                                        size="small"
-                                        sx={{
-                                            position: 'absolute',
-                                            top: 16,
-                                            right: 16,
-                                            bgcolor: 'rgba(255,255,255,0.9)',
-                                            backdropFilter: 'blur(4px)',
-                                            fontWeight: 600,
-                                            color: getCategoryColor(tip.category),
-                                        }}
-                                    />
-                                </Box>
-                                <CardContent sx={{ flexGrow: 1, p: 3 }}>
-                                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, lineHeight: 1.3 }}>
-                                        {tip.title}
+                                    {getCategoryIcon(tip.category)}
+                                </Avatar>
+                                <Chip
+                                    label={tip.category}
+                                    size="small"
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 16,
+                                        right: 16,
+                                        bgcolor: 'rgba(255,255,255,0.9)',
+                                        backdropFilter: 'blur(4px)',
+                                        fontWeight: 600,
+                                        color: getCategoryColor(tip.category),
+                                    }}
+                                />
+                                <IconButton
+                                    size="small"
+                                    onClick={() => toggleBookmark(tip.id)}
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 16,
+                                        left: 16,
+                                        bgcolor: 'rgba(255,255,255,0.9)',
+                                        backdropFilter: 'blur(4px)',
+                                        '&:hover': { bgcolor: 'rgba(255,255,255,1)' },
+                                    }}
+                                >
+                                    {bookmarkedTips.has(tip.id) ? (
+                                        <Favorite sx={{ color: '#ef4444', fontSize: 20 }} />
+                                    ) : (
+                                        <FavoriteBorder sx={{ color: 'text.secondary', fontSize: 20 }} />
+                                    )}
+                                </IconButton>
+                            </Box>
+                            <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                                <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, lineHeight: 1.3 }}>
+                                    {tip.title}
+                                </Typography>
+                                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                                    <AccessTime sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                    <Typography variant="caption" color="text.secondary">
+                                        {calculateReadingTime(tip.content)} Min. Lesezeit
                                     </Typography>
-                                    <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                        sx={{
-                                            display: '-webkit-box',
-                                            WebkitLineClamp: 4,
-                                            WebkitBoxOrient: 'vertical',
-                                            overflow: 'hidden',
-                                            lineHeight: 1.6,
-                                        }}
-                                    >
-                                        {tip.content}
-                                    </Typography>
-                                </CardContent>
-                                <CardActions sx={{ p: 2, pt: 0, justifyContent: 'space-between' }}>
-                                    <Box>
-                                        <IconButton size="small" sx={{ color: 'text.secondary', '&:hover': { color: '#ef4444' } }}>
-                                            <Favorite fontSize="small" />
-                                        </IconButton>
-                                        <IconButton size="small" sx={{ color: 'text.secondary', '&:hover': { color: '#4facfe' } }}>
-                                            <Share fontSize="small" />
-                                        </IconButton>
-                                    </Box>
-                                    <Button
-                                        endIcon={<ArrowForward />}
-                                        sx={{
-                                            textTransform: 'none',
-                                            color: getCategoryColor(tip.category),
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        Mehr lesen
-                                    </Button>
-                                </CardActions>
-                            </Card>
-                        </Grid>
+                                </Stack>
+                                <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 4,
+                                        WebkitBoxOrient: 'vertical',
+                                        overflow: 'hidden',
+                                        lineHeight: 1.6,
+                                    }}
+                                >
+                                    {tip.content}
+                                </Typography>
+                            </CardContent>
+                            <CardActions sx={{ p: 2, pt: 0, justifyContent: 'space-between' }}>
+                                <IconButton
+                                    size="small"
+                                    onClick={() => handleShare(tip)}
+                                    sx={{ color: 'text.secondary', '&:hover': { color: '#4facfe' } }}
+                                >
+                                    <Share fontSize="small" />
+                                </IconButton>
+                                <Button
+                                    endIcon={<ArrowForward />}
+                                    sx={{
+                                        textTransform: 'none',
+                                        color: getCategoryColor(tip.category),
+                                        fontWeight: 600,
+                                    }}
+                                >
+                                    Mehr lesen
+                                </Button>
+                            </CardActions>
+                        </Card>
                     ))}
-                </Grid>
+                </Box>
             ) : (
                 <Paper
                     sx={{
@@ -262,10 +366,58 @@ export default function HealthTipsPage() {
                         Keine Tipps gefunden
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                        Wählen Sie eine andere Kategorie oder schauen Sie später wieder vorbei
+                        {searchQuery ? 'Versuchen Sie eine andere Suchanfrage' : 'Wählen Sie eine andere Kategorie oder schauen Sie später wieder vorbei'}
                     </Typography>
                 </Paper>
             )}
+
+            {/* Share Dialog */}
+            <Dialog open={shareDialogOpen} onClose={() => setShareDialogOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Tipp teilen</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Teilen Sie "{selectedTip?.title}" mit Ihren Freunden
+                    </Typography>
+                    <Stack spacing={2}>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            startIcon={<Facebook />}
+                            sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
+                        >
+                            Auf Facebook teilen
+                        </Button>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            startIcon={<Twitter />}
+                            sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
+                        >
+                            Auf Twitter teilen
+                        </Button>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            startIcon={<LinkedIn />}
+                            sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
+                        >
+                            Auf LinkedIn teilen
+                        </Button>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            startIcon={<Email />}
+                            sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
+                            href={`mailto:?subject=${encodeURIComponent(selectedTip?.title || '')}&body=${encodeURIComponent('Schau dir diesen Gesundheitstipp an: ' + selectedTip?.title)}`}
+                        >
+                            Per E-Mail teilen
+                        </Button>
+                    </Stack>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setShareDialogOpen(false)}>Schließen</Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

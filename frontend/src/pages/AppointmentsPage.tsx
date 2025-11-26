@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Typography,
     Card,
@@ -17,6 +17,13 @@ import {
     Tab,
     IconButton,
     Tooltip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    DialogContentText,
+    Snackbar,
+    Alert,
 } from '@mui/material';
 import {
     CalendarMonth,
@@ -34,9 +41,19 @@ import {
 import apiClient from '../api/client';
 import { format, isPast, isFuture, differenceInHours, differenceInMinutes } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
+import BookingDialog from '../components/BookingDialog';
 
 export default function AppointmentsPage() {
     const [tabValue, setTabValue] = useState(0);
+    const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+    const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(null);
+    const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
+    const [selectedAppointmentForReschedule, setSelectedAppointmentForReschedule] = useState<any>(null);
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+
+    const queryClient = useQueryClient();
+    const navigate = useNavigate();
 
     const { data: appointments, isLoading } = useQuery({
         queryKey: ['appointments'],
@@ -45,6 +62,46 @@ export default function AppointmentsPage() {
             return res.data;
         },
     });
+
+    const cancelMutation = useMutation({
+        mutationFn: async (id: number) => {
+            await apiClient.patch(`/appointments/${id}`, { status: 'CANCELLED' });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['appointments'] });
+            setSnackbar({ open: true, message: 'Termin erfolgreich abgesagt', severity: 'success' });
+            setCancelDialogOpen(false);
+        },
+        onError: () => {
+            setSnackbar({ open: true, message: 'Fehler beim Absagen des Termins', severity: 'error' });
+        },
+    });
+
+    const handleCancelClick = (id: number) => {
+        setSelectedAppointmentId(id);
+        setCancelDialogOpen(true);
+    };
+
+    const handleConfirmCancel = () => {
+        if (selectedAppointmentId) {
+            cancelMutation.mutate(selectedAppointmentId);
+        }
+    };
+
+    const handleRescheduleClick = (appointment: any) => {
+        setSelectedAppointmentForReschedule(appointment);
+        setRescheduleDialogOpen(true);
+    };
+
+    const handleRescheduleSuccess = () => {
+        queryClient.invalidateQueries({ queryKey: ['appointments'] });
+        setSnackbar({ open: true, message: 'Termin erfolgreich verschoben', severity: 'success' });
+        setRescheduleDialogOpen(false);
+    };
+
+    const handleJoinCall = (url: string) => {
+        window.open(url || 'https://meet.google.com/new', '_blank');
+    };
 
     const getStatusColor = (status: string) => {
         const colors: Record<string, string> = {
@@ -300,6 +357,7 @@ export default function AppointmentsPage() {
                                                         fullWidth
                                                         variant="contained"
                                                         startIcon={<VideoCall />}
+                                                        onClick={() => handleJoinCall(apt.video_url)}
                                                         sx={{
                                                             borderRadius: 2,
                                                             textTransform: 'none',
@@ -312,6 +370,7 @@ export default function AppointmentsPage() {
                                                 )}
                                                 <Tooltip title="Termin verschieben">
                                                     <IconButton
+                                                        onClick={() => handleRescheduleClick(apt)}
                                                         sx={{
                                                             border: '2px solid',
                                                             borderColor: 'primary.main',
@@ -329,6 +388,7 @@ export default function AppointmentsPage() {
                                                     variant="outlined"
                                                     startIcon={<Cancel />}
                                                     color="error"
+                                                    onClick={() => handleCancelClick(apt.id)}
                                                     sx={{
                                                         borderRadius: 2,
                                                         textTransform: 'none',
@@ -382,6 +442,7 @@ export default function AppointmentsPage() {
                     {tabValue === 0 && (
                         <Button
                             variant="contained"
+                            onClick={() => navigate('/doctors')}
                             sx={{
                                 px: 4,
                                 py: 1.2,
@@ -395,6 +456,51 @@ export default function AppointmentsPage() {
                     )}
                 </Paper>
             )}
+
+            {/* Cancel Confirmation Dialog */}
+            <Dialog
+                open={cancelDialogOpen}
+                onClose={() => setCancelDialogOpen(false)}
+            >
+                <DialogTitle>Termin absagen?</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Möchten Sie diesen Termin wirklich absagen? Diese Aktion kann nicht rückgängig gemacht werden.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setCancelDialogOpen(false)}>Abbrechen</Button>
+                    <Button onClick={handleConfirmCancel} color="error" autoFocus>
+                        Termin absagen
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Reschedule Dialog */}
+            {selectedAppointmentForReschedule && (
+                <BookingDialog
+                    open={rescheduleDialogOpen}
+                    onClose={() => setRescheduleDialogOpen(false)}
+                    doctor={{
+                        id: selectedAppointmentForReschedule.doctor_id,
+                        name: selectedAppointmentForReschedule.doctor_name,
+                        specialization: 'Spezialist' // Fallback as we might not have it in appointment object
+                    }}
+                    onSuccess={handleRescheduleSuccess}
+                    appointmentId={selectedAppointmentForReschedule.id}
+                />
+            )}
+
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }
